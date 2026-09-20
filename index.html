@@ -409,6 +409,23 @@
     @media (prefers-reduced-motion:reduce) {
       *, *::before, *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
     }
+    /* Shared credit stays above the home indicator on every screen. */
+    .app-footer {
+      position:fixed; left:50%; bottom:calc(6px + env(safe-area-inset-bottom, 0px));
+      transform:translateX(-50%); z-index:20; width:max-content; max-width:calc(100% - 24px);
+      color:#69717d; font-size:11px; line-height:20px; text-align:center; white-space:nowrap;
+    }
+    .app-footer a { display:inline-block; padding:12px 0; color:inherit; font-weight:550; text-decoration:none; }
+    .app-footer a:hover { text-decoration:underline; text-underline-offset:3px; }
+    .app-footer a:focus-visible { outline:2px solid currentColor; outline-offset:3px; border-radius:3px; }
+    #timer.active.has-bg ~ .app-footer { color:#fff; text-shadow:0 1px 5px #000, 0 0 12px #0009; }
+    #dashboard, #photos { padding-bottom:calc(76px + env(safe-area-inset-bottom, 0px)); }
+    #landing, #onboarding { padding-bottom:calc(64px + env(safe-area-inset-bottom, 0px)); }
+    .landing-shell { min-height:min(720px, calc(100svh - 100px - env(safe-area-inset-bottom, 0px))); }
+    #timer .quote-chip { bottom:calc(64px + env(safe-area-inset-bottom, 0px)); }
+    @media (max-height:500px) {
+      #timer .timer-content { padding-bottom:calc(58px + env(safe-area-inset-bottom, 0px)); }
+    }
   </style>
 </head>
 <body>
@@ -519,6 +536,8 @@
       </div>
     </div>
   </div>
+
+  <footer class="app-footer">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://nanosyllabus.com" target="_blank" rel="noopener noreferrer">nanosyllabus.com</a></footer>
 
   <script>
   (function(){
