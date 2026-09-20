@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f5f7ef">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Focus">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Focus — Study Timer</title>
   <style>
     :root {
@@ -288,6 +292,11 @@
     /* Always crop to fill; portrait/landscape labels never constrain image sizing. */
     #timer .bg-layer { position: absolute; inset: -2px; z-index: 0; width: calc(100% + 4px); height: calc(100% + 4px); max-width: none; max-height: none; object-position: center; object-fit: cover; opacity: 0; transition: opacity 1s ease; pointer-events: none; }
     #timer .bg-layer.on { opacity: 1; }
+    html:fullscreen #timer { top: 0; height: 100%; }
+    html:-webkit-full-screen #timer { top: 0; height: 100%; }
+    html::backdrop { background: #171f2d; }
+    .focus-notice { position:absolute; top:max(76px, calc(env(safe-area-inset-top) + 56px)); left:50%; transform:translateX(-50%); z-index:5; width:min(440px, calc(100% - 40px)); padding:14px 44px 14px 16px; border:1px solid #ffffff90; border-radius:16px; background:#ffffffeb; color:#343e50; font-size:12px; line-height:1.5; -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px); }
+    .focus-notice button { position:absolute; right:0; top:0; width:40px; height:44px; padding:0; border:0; background:transparent; color:inherit; font-size:20px; }
     #timer .bg-overlay { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at 50% 44%, #fff 0%, #f6f7f9 70%); }
     #timer.has-bg .bg-overlay { background: linear-gradient(180deg, rgba(9,16,30,.24), rgba(9,16,30,.55)); }
     .timer-topline { position: absolute; top: max(24px, env(safe-area-inset-top)); left: max(24px, env(safe-area-inset-left)); z-index: 3; }
@@ -465,7 +474,8 @@
   </div>
 
   <div id="timer" class="screen">
-    <div class="timer-topline"><button class="back-btn" id="backToDashBtn" aria-label="Save session and return to dashboard">← Back</button></div>
+    <div class="timer-topline"><button class="back-btn" id="backToDashBtn" aria-label="Exit full screen and save session">× Exit</button></div>
+    <div class="focus-notice" id="focusNotice" role="status" aria-live="polite" hidden><span id="focusNoticeText"></span><button id="dismissFocusNotice" aria-label="Dismiss notice">×</button></div>
     <div class="quote-chip" id="timerQuote"></div>
     <img class="bg-layer" id="bgLayerA" alt="" aria-hidden="true" decoding="async"><img class="bg-layer" id="bgLayerB" alt="" aria-hidden="true" decoding="async"><div class="bg-overlay"></div>
     <div class="timer-content">
@@ -560,8 +570,8 @@
     function fmtMins(mins){const h=Math.floor(mins/60),m=mins%60;return h>0?h+'h '+m+'m':m+'m';}
     function renderMonthChart(){const now=new Date(),y=now.getFullYear(),mo=now.getMonth(),days=new Date(y,mo+1,0).getDate(),hours=[];for(let d=1;d<=days;d++)hours.push((history[y+'-'+(mo+1)+'-'+d]||0)/60);const maxH=Math.max(1,...hours),w=300,h=120,bottom=92,gap=2,barW=Math.max(1.5,w/days-gap),today=now.getDate();let bars='';for(let d=1;d<=days;d++){const v=hours[d-1],x=(d-1)*(w/days)+gap/2,barH=Math.max(1,v/maxH*(bottom-6)),yp=bottom-barH,fill=d===today?'#b5d838':'#3158e8';bars+='<rect x="'+x.toFixed(1)+'" y="'+yp.toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+barH.toFixed(1)+'" rx="1.5" fill="'+fill+'"/>';if(d%((days>24)?2:1)===1||d===days)bars+='<text x="'+(x+barW/2).toFixed(1)+'" y="108" font-size="7" text-anchor="middle" fill="#728078">'+d+'</text>';}document.getElementById('monthChart').innerHTML=bars;document.getElementById('allTimeBest').textContent=fmtMins(Object.values(history).reduce((a,b)=>Math.max(a,b),0));}
     function renderDashboard(){document.getElementById('greetText').textContent='Today';document.getElementById('dashDate').textContent=fmtDate();const totalMins=Math.round(totalMsToday()/60000);document.getElementById('dashTotal').textContent=totalMins+'m';updateHistory(totalMins);renderMonthChart();const goal=profile&&profile.dailyGoal?profile.dailyGoal:60,pct=Math.min(100,Math.round(totalMins/goal*100));document.getElementById('dashProgressFill').style.width=pct+'%';document.getElementById('dashGoalText').textContent=totalMins>=goal?'A little progress is already here.':(goal-totalMins)+'m of quiet focus left in today\'s rhythm';const added=photos.filter(p=>p.portrait||p.landscape).length;document.getElementById('photosCount').textContent=added+' of '+PHOTO_SLOTS.length+' added'+(quotePhoto?' · quote photo ready':'');}
-    document.getElementById('goToTimerBtn').addEventListener('click',()=>{showScreen('timer');syncQuoteChip();syncTimerScreen();startPhotoRotation();});
-    document.getElementById('backToDashBtn').addEventListener('click',()=>{finalizeActive();stopPhotoRotation();renderDashboard();showScreen('dashboard');});
+    document.getElementById('goToTimerBtn').addEventListener('click',enterFocusMode);
+    document.getElementById('backToDashBtn').addEventListener('click',exitFocusMode);
     function openPhotos(){document.getElementById('quoteInput').value=quote;renderQuotePhoto();renderPhotoSlots();showScreen('photos');}
     document.getElementById('openPhotosBtn').addEventListener('click',openPhotos);document.getElementById('closePhotosBtn').addEventListener('click',()=>{renderDashboard();showScreen('dashboard');});
     document.getElementById('quoteInput').addEventListener('input',e=>{quote=e.target.value;saveStored(QUOTE_KEY,quote);});
@@ -575,6 +585,110 @@
 
     const timerEl=document.getElementById('timer'),clockEl=document.getElementById('timerClock'),toggleBtn=document.getElementById('timerToggleBtn'),timerButtonLabel=document.getElementById('timerButtonLabel'),waterGlass=document.getElementById('waterGlass'),waterFill=document.getElementById('waterFill'),layerA=document.getElementById('bgLayerA'),layerB=document.getElementById('bgLayerB');let photoRotateTimer=null,photoIdx=0,frontLayer=layerA,backLayer=layerB,resizeDebounce=null,photoRequest=0,currentPhotoUrl='';
     const waveFront=document.getElementById('waveFront'),waveBack=document.getElementById('waveBack'),waveEdge=document.getElementById('waveEdge'),secondHand=document.getElementById('secondHand');
+    // Fullscreen requires a user gesture. A wake lock is temporary and may be refused.
+    let focusMode=false,focusEpoch=0,nativeFullscreen=false;
+    let wakeLock=null,wakeRequest=null,wakeEpoch=0,noticeTimeout=null;
+    const focusNotices=new Map();
+    function fullscreenElement(){return document.fullscreenElement||document.webkitFullscreenElement||null;}
+    function isStandalone(){return window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches||window.matchMedia('(display-mode: fullscreen)').matches;}
+    function showFocusNotice(key,message){
+      if(!focusMode||focusNotices.has(key))return;
+      focusNotices.set(key,message);
+      document.getElementById('focusNoticeText').textContent=Array.from(focusNotices.values()).join(' ');
+      document.getElementById('focusNotice').hidden=false;
+      clearTimeout(noticeTimeout);
+      noticeTimeout=setTimeout(()=>{document.getElementById('focusNotice').hidden=true;},12000);
+    }
+    document.getElementById('dismissFocusNotice').addEventListener('click',()=>{
+      clearTimeout(noticeTimeout);document.getElementById('focusNotice').hidden=true;
+    });
+    function fullscreenFallback(){
+      const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+      showFocusNotice('fullscreen',ios?
+        'For a view without Safari controls, use Share → Add to Home Screen, then open Focus from your Home Screen.':
+        'Full screen is unavailable in this browser or preview. The timer will still work here.');
+    }
+    async function closeNativeFullscreen(){
+      if(fullscreenElement()!==document.documentElement)return;
+      const exit=document.exitFullscreen||document.webkitExitFullscreen;
+      if(exit){try{await exit.call(document);}catch(e){/* Browser/system exit remains available. */}}
+    }
+    function requestFocusFullscreen(){
+      if(isStandalone()||fullscreenElement()===document.documentElement)return;
+      const root=document.documentElement,request=root.requestFullscreen||root.webkitRequestFullscreen;
+      if(!request){fullscreenFallback();return;}
+      const epoch=focusEpoch;
+      // Do not await anything before this call: it must stay inside the button gesture.
+      try{
+        const result=root.requestFullscreen?root.requestFullscreen({navigationUI:'hide'}):request.call(root);
+        Promise.resolve(result).then(()=>{
+          if(!focusMode){void closeNativeFullscreen();return;}
+          if(epoch===focusEpoch){nativeFullscreen=fullscreenElement()===root;syncTimerViewport();}
+        }).catch(()=>{if(focusMode&&epoch===focusEpoch)fullscreenFallback();});
+      }catch(e){fullscreenFallback();}
+    }
+    function releaseScreenAwake(){
+      wakeEpoch++;
+      const lock=wakeLock;wakeLock=null;
+      if(lock&&!lock.released){try{Promise.resolve(lock.release()).catch(()=>{});}catch(e){}}
+    }
+    function requestScreenAwake(){
+      if(!focusMode||document.hidden||wakeRequest||(wakeLock&&!wakeLock.released))return;
+      if(!window.isSecureContext||!navigator.wakeLock){
+        showFocusNotice('wake','Screen-awake mode is unavailable here. Your usual auto-lock setting still applies.');
+        return;
+      }
+      const epoch=wakeEpoch;
+      const pending=(async()=>{
+        try{
+          const lock=await navigator.wakeLock.request('screen');
+          if(epoch!==wakeEpoch||!focusMode||document.hidden){await lock.release();return;}
+          wakeLock=lock;
+          lock.addEventListener('release',()=>{
+            if(wakeLock!==lock)return;
+            wakeLock=null;
+            if(focusMode&&!document.hidden)showFocusNotice('wake','Your device released screen-awake mode. Your usual auto-lock setting may apply.');
+          });
+        }catch(e){
+          if(epoch===wakeEpoch&&focusMode&&!document.hidden)
+            showFocusNotice('wake','Your device could not keep the screen awake. Your usual auto-lock setting still applies.');
+        }
+      })();
+      wakeRequest=pending;
+      pending.finally(()=>{
+        if(wakeRequest===pending)wakeRequest=null;
+        if(epoch!==wakeEpoch&&focusMode&&!document.hidden)requestScreenAwake();
+      });
+    }
+    function enterFocusMode(){
+      focusMode=true;focusEpoch++;focusNotices.clear();
+      clearTimeout(noticeTimeout);document.getElementById('focusNotice').hidden=true;
+      showScreen('timer');
+      requestFocusFullscreen();
+      requestScreenAwake();
+      syncQuoteChip();syncTimerScreen();startPhotoRotation();
+    }
+    function exitFocusMode(){
+      if(!focusMode&&!screens.timer.classList.contains('active'))return;
+      focusMode=false;focusEpoch++;nativeFullscreen=false;
+      clearTimeout(noticeTimeout);document.getElementById('focusNotice').hidden=true;
+      releaseScreenAwake();
+      finalizeActive();stopPhotoRotation();stopLiquidMotion();
+      renderDashboard();showScreen('dashboard');
+      void closeNativeFullscreen();
+    }
+    function onFullscreenChange(){
+      const active=fullscreenElement()===document.documentElement;
+      if(active&&!focusMode){void closeNativeFullscreen();return;}
+      if(!active&&nativeFullscreen){nativeFullscreen=false;exitFocusMode();return;}
+      nativeFullscreen=active;
+      if(focusMode)syncTimerViewport();
+    }
+    document.addEventListener('fullscreenchange',onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange',onFullscreenChange);
+    document.addEventListener('keydown',event=>{
+      if(event.key==='Escape'&&focusMode&&!fullscreenElement())exitFocusMode();
+    });
     const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
     let liquidFrame=null,lastLiquidFrame=0,lastHandTick=-1;
     function drawLiquid(elapsed){
@@ -685,14 +799,14 @@
       drawLiquid(elapsed);
       if(running&&screens.timer.classList.contains('active')&&!document.hidden)startLiquidMotion();else stopLiquidMotion();
     }
-    toggleBtn.addEventListener('click',()=>{if(activeSession&&activeSession.running)pauseActive();else startOrResume();syncTimerScreen();});
+    toggleBtn.addEventListener('click',()=>{if(activeSession&&activeSession.running)pauseActive();else startOrResume();syncTimerScreen();requestScreenAwake();});
     document.addEventListener('visibilitychange',()=>{
       if(!screens.timer.classList.contains('active'))return;
-      if(document.visibilityState==='hidden'){finalizeActive();stopPhotoRotation();stopLiquidMotion();}
-      else{syncTimerScreen();startPhotoRotation();}
+      if(document.visibilityState==='hidden'){finalizeActive();stopPhotoRotation();stopLiquidMotion();releaseScreenAwake();}
+      else{syncTimerViewport();syncTimerScreen();startPhotoRotation();requestScreenAwake();}
     });
-    window.addEventListener('pagehide',()=>{if(screens.timer.classList.contains('active'))finalizeActive();stopLiquidMotion();});
-    window.addEventListener('pageshow',()=>{if(screens.timer.classList.contains('active')){syncTimerScreen();startPhotoRotation();}});
+    window.addEventListener('pagehide',()=>{if(screens.timer.classList.contains('active'))finalizeActive();stopLiquidMotion();releaseScreenAwake();});
+    window.addEventListener('pageshow',()=>{if(screens.timer.classList.contains('active')){syncTimerViewport();syncTimerScreen();startPhotoRotation();requestScreenAwake();}});
     setInterval(()=>{if(log.day!==todayKey()&&!(activeSession&&activeSession.running)){log={day:todayKey(),sessions:[]};setJSON(LOG_KEY,log);}if(screens.timer.classList.contains('active'))syncTimerScreen();if(screens.dashboard.classList.contains('active'))renderDashboard();},1000);
     if(activeSession)finalizeActive();if(profile&&profile.onboarded){renderDashboard();showScreen('dashboard');}else showScreen('landing');
   })();
