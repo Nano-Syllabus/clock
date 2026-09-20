@@ -280,11 +280,13 @@
     input[type=file] { display: none; }
 
     /* Liquid glass: motion is driven by elapsed time, never by a free-running animation. */
-    body.timer-open { overflow: hidden; overscroll-behavior: none; }
+    html.timer-open, body.timer-open { overflow: hidden; overscroll-behavior: none; background-color: #171f2d; background-image: var(--timer-photo, none); background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed; }
+    html.timer-open { height: 100%; }
+    body.timer-open { position: fixed; inset: 0; width: 100%; height: 100%; }
     /* Fill the live viewport, including space freed when Safari's toolbar collapses. */
-    #timer { position: fixed; inset: 0; z-index: 10; width: 100%; height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; align-items: center; justify-content: center; background: #f7f8fa; isolation: isolate; }
+    #timer { position: fixed; inset: 0; z-index: 10; width: 100%; height: 100vh; height: var(--timer-height, 100dvh); top: var(--timer-top, 0px); min-height: 0; overflow: hidden; align-items: center; justify-content: center; background: #f7f8fa; isolation: isolate; }
     /* Always crop to fill; portrait/landscape labels never constrain image sizing. */
-    #timer .bg-layer { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; background-position: center center; background-size: cover; background-repeat: no-repeat; opacity: 0; transition: opacity 1s ease; pointer-events: none; }
+    #timer .bg-layer { position: absolute; inset: -2px; z-index: 0; width: calc(100% + 4px); height: calc(100% + 4px); max-width: none; max-height: none; object-position: center; object-fit: cover; opacity: 0; transition: opacity 1s ease; pointer-events: none; }
     #timer .bg-layer.on { opacity: 1; }
     #timer .bg-overlay { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at 50% 44%, #fff 0%, #f6f7f9 70%); }
     #timer.has-bg .bg-overlay { background: linear-gradient(180deg, rgba(9,16,30,.24), rgba(9,16,30,.55)); }
@@ -310,10 +312,10 @@
     .timer-btn.running { color: #274cce; background: #eef3ffdf; border-color: #fff; }
     .timer-state { color: #666f7d; font-size: 11px; letter-spacing: .025em; min-height: 15px; }
     #timer.has-bg .timer-state { color: white; text-shadow: 0 1px 8px #000; }
-    .button-clock { position: relative; width: 21px; height: 21px; flex: 0 0 auto; border: 1.3px solid currentColor; border-radius: 50%; }
-    .clock-hand, .clock-hour { position: absolute; bottom: 50%; left: 50%; width: 1.5px; height: 7px; border-radius: 99px; background: currentColor; transform: translateX(-50%); transform-origin: 50% 100%; }
-    .clock-hour { height: 5px; transform: translateX(-50%) rotate(120deg); opacity: .45; }
-    .clock-hand::after { content: ""; position: absolute; bottom: -1.5px; left: 50%; width: 3px; height: 3px; border-radius: 50%; background: currentColor; transform: translateX(-50%); }
+    .button-clock { position: relative; width: 31.5px; height: 31.5px; flex: 0 0 auto; border: 1.95px solid currentColor; border-radius: 50%; }
+    .clock-hand, .clock-hour { position: absolute; bottom: 50%; left: 50%; width: 2.25px; height: 10.5px; border-radius: 99px; background: currentColor; transform: translateX(-50%); transform-origin: 50% 100%; }
+    .clock-hour { height: 7.5px; transform: translateX(-50%) rotate(120deg); opacity: .45; }
+    .clock-hand::after { content: ""; position: absolute; bottom: -2.25px; left: 50%; width: 4.5px; height: 4.5px; border-radius: 50%; background: currentColor; transform: translateX(-50%); }
     @media (max-width: 820px) {
       .landing-shell { grid-template-columns: 1fr; min-height: calc(100vh - 48px); padding: 36px; }
       .hero-art { min-height: 250px; transform: scale(.76); margin: -38px 0 -50px; }
@@ -346,7 +348,7 @@
     .hero-orbit, .hero-caption, .landing-note { display:none; }
     .hero-glass-card { transform:none; }
     .hero-bubble { animation:none; }
-    #dashboard { max-width:860px; padding-top:clamp(32px,8vh,84px); }
+    #dashboard { max-width:860px; padding-top:max(18px, env(safe-area-inset-top)); padding-bottom:24px; }
     .dash-header .greet { font-weight:550; letter-spacing:-.045em; margin:0; }
     .progress-card, .chart-card, .quote-preview, .photos-btn { background:#fff; box-shadow:none; border-color:#e7eaf0; border-radius:22px; }
     .progress-card .big { font-weight:300; }
@@ -446,16 +448,15 @@
       <div class="progress-card"><div class="label">Studied today</div><div class="big serif" id="dashTotal">0m</div><div class="progress-bar"><div class="progress-bar-fill" id="dashProgressFill" style="width:0%"></div></div><div class="progress-goal" id="dashGoalText"></div></div>
       <div class="chart-card"><div class="chart-head"><span class="chart-title">This month, in hours</span><span class="chart-title">Daily</span></div><svg id="monthChart" viewBox="0 0 300 120" preserveAspectRatio="none"></svg><div class="best-row"><span class="best-label">All-time best day</span><span class="best-value serif" id="allTimeBest">0m</span></div></div>
     </div>
-    <div class="quote-preview"><div class="quote-mark">“</div><p id="quotePreviewText">Add a famous quote photo or a line that keeps you moving.</p><button id="openQuoteBtn">Edit</button></div>
-    <button class="photos-btn" id="openPhotosBtn"><span>Photos & quotes</span><span class="count" id="photosCount">0 of 7 added</span></button>
+    <button class="photos-btn" id="openPhotosBtn"><span>Motivation photo and quotes</span><span class="count" id="photosCount">0 of 7 added</span></button>
     <button class="start-fab" id="goToTimerBtn">Start session</button>
   </div>
 
   <div id="photos" class="screen">
-    <div class="photos-header"><button id="closePhotosBtn" aria-label="Back to dashboard">←</button><h2 class="serif">Your visual reasons</h2></div>
+    <div class="photos-header"><button id="closePhotosBtn" aria-label="Back to dashboard">←</button><h2 class="serif">Motivation photo and quotes</h2></div>
     <p class="hint">Add the words and images you want nearby when focus gets difficult. They softly appear behind your timer.</p>
     <div class="quote-card">
-      <div><div class="label">Favourite famous quote</div><div class="sub">Keep one sentence close when you need a reset.</div><textarea id="quoteInput" placeholder="A line that keeps you going"></textarea></div>
+      <div><label class="label" for="quoteInput">Edit quote</label><div class="sub">Keep one sentence close when you need a reset.</div><textarea id="quoteInput" placeholder="A line that keeps you going"></textarea></div>
       <button class="quote-photo-box" id="quotePhotoBtn" type="button"><strong id="quotePhotoLabel">＋ Add quote photo</strong><small id="quotePhotoHint">A screenshot, poster, or handwritten line.</small></button>
     </div>
     <div id="photoSlots"></div>
@@ -466,7 +467,7 @@
   <div id="timer" class="screen">
     <div class="timer-topline"><button class="back-btn" id="backToDashBtn" aria-label="Save session and return to dashboard">← Back</button></div>
     <div class="quote-chip" id="timerQuote"></div>
-    <div class="bg-layer" id="bgLayerA"></div><div class="bg-layer" id="bgLayerB"></div><div class="bg-overlay"></div>
+    <img class="bg-layer" id="bgLayerA" alt="" aria-hidden="true" decoding="async"><img class="bg-layer" id="bgLayerB" alt="" aria-hidden="true" decoding="async"><div class="bg-overlay"></div>
     <div class="timer-content">
       <div class="glass-stage">
         <div class="glass-shadow" aria-hidden="true"></div>
@@ -541,7 +542,7 @@
     if(!photos){photos=PHOTO_SLOTS.map(s=>({key:s.key,portrait:null,landscape:null}));setJSON(PHOTOS_KEY,photos);}
     else{photos=photos.map(p=>p.portrait===undefined?{key:p.key,portrait:null,landscape:p.dataUrl||null}:p);PHOTO_SLOTS.forEach(s=>{if(!photos.find(p=>p.key===s.key))photos.push({key:s.key,portrait:null,landscape:null});});setJSON(PHOTOS_KEY,photos);}
     const screens={landing:document.getElementById('landing'),onboarding:document.getElementById('onboarding'),dashboard:document.getElementById('dashboard'),photos:document.getElementById('photos'),timer:document.getElementById('timer')};
-    function showScreen(name){Object.values(screens).forEach(s=>s.classList.remove('active'));screens[name].classList.add('active');document.body.classList.toggle('timer-open',name==='timer');if(name!=='timer'){stopPhotoRotation();stopLiquidMotion();}window.scrollTo(0,0);}
+    function showScreen(name){Object.values(screens).forEach(s=>s.classList.remove('active'));screens[name].classList.add('active');document.documentElement.classList.toggle('timer-open',name==='timer');document.body.classList.toggle('timer-open',name==='timer');if(name==='timer')syncTimerViewport();if(name!=='timer'){stopPhotoRotation();stopLiquidMotion();}window.scrollTo(0,0);}
 
     let problemAnswers={},currentStep=1;
     function setStep(step){currentStep=step;[1,2,3].forEach(n=>{document.getElementById('step'+n).classList.toggle('active',n===step);const p=document.getElementById('prog'+n);p.classList.toggle('done',n<step);p.classList.toggle('current',n===step);});document.getElementById('obStepCount').textContent=String(step).padStart(2,'0')+' / 03';}
@@ -558,11 +559,11 @@
     function updateHistory(totalMins){history[todayKey()]=totalMins;setJSON(HISTORY_KEY,history);}
     function fmtMins(mins){const h=Math.floor(mins/60),m=mins%60;return h>0?h+'h '+m+'m':m+'m';}
     function renderMonthChart(){const now=new Date(),y=now.getFullYear(),mo=now.getMonth(),days=new Date(y,mo+1,0).getDate(),hours=[];for(let d=1;d<=days;d++)hours.push((history[y+'-'+(mo+1)+'-'+d]||0)/60);const maxH=Math.max(1,...hours),w=300,h=120,bottom=92,gap=2,barW=Math.max(1.5,w/days-gap),today=now.getDate();let bars='';for(let d=1;d<=days;d++){const v=hours[d-1],x=(d-1)*(w/days)+gap/2,barH=Math.max(1,v/maxH*(bottom-6)),yp=bottom-barH,fill=d===today?'#b5d838':'#3158e8';bars+='<rect x="'+x.toFixed(1)+'" y="'+yp.toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+barH.toFixed(1)+'" rx="1.5" fill="'+fill+'"/>';if(d%((days>24)?2:1)===1||d===days)bars+='<text x="'+(x+barW/2).toFixed(1)+'" y="108" font-size="7" text-anchor="middle" fill="#728078">'+d+'</text>';}document.getElementById('monthChart').innerHTML=bars;document.getElementById('allTimeBest').textContent=fmtMins(Object.values(history).reduce((a,b)=>Math.max(a,b),0));}
-    function renderDashboard(){document.getElementById('greetText').textContent='Today';document.getElementById('dashDate').textContent=fmtDate();const totalMins=Math.round(totalMsToday()/60000);document.getElementById('dashTotal').textContent=totalMins+'m';updateHistory(totalMins);renderMonthChart();const goal=profile&&profile.dailyGoal?profile.dailyGoal:60,pct=Math.min(100,Math.round(totalMins/goal*100));document.getElementById('dashProgressFill').style.width=pct+'%';document.getElementById('dashGoalText').textContent=totalMins>=goal?'A little progress is already here.':(goal-totalMins)+'m of quiet focus left in today\'s rhythm';const added=photos.filter(p=>p.portrait||p.landscape).length;document.getElementById('photosCount').textContent=added+' of '+PHOTO_SLOTS.length+' added'+(quotePhoto?' · quote photo ready':'');document.getElementById('quotePreviewText').textContent=quote.trim()?quote.trim():'A few words to come back to.';}
+    function renderDashboard(){document.getElementById('greetText').textContent='Today';document.getElementById('dashDate').textContent=fmtDate();const totalMins=Math.round(totalMsToday()/60000);document.getElementById('dashTotal').textContent=totalMins+'m';updateHistory(totalMins);renderMonthChart();const goal=profile&&profile.dailyGoal?profile.dailyGoal:60,pct=Math.min(100,Math.round(totalMins/goal*100));document.getElementById('dashProgressFill').style.width=pct+'%';document.getElementById('dashGoalText').textContent=totalMins>=goal?'A little progress is already here.':(goal-totalMins)+'m of quiet focus left in today\'s rhythm';const added=photos.filter(p=>p.portrait||p.landscape).length;document.getElementById('photosCount').textContent=added+' of '+PHOTO_SLOTS.length+' added'+(quotePhoto?' · quote photo ready':'');}
     document.getElementById('goToTimerBtn').addEventListener('click',()=>{showScreen('timer');syncQuoteChip();syncTimerScreen();startPhotoRotation();});
     document.getElementById('backToDashBtn').addEventListener('click',()=>{finalizeActive();stopPhotoRotation();renderDashboard();showScreen('dashboard');});
     function openPhotos(){document.getElementById('quoteInput').value=quote;renderQuotePhoto();renderPhotoSlots();showScreen('photos');}
-    document.getElementById('openPhotosBtn').addEventListener('click',openPhotos);document.getElementById('openQuoteBtn').addEventListener('click',openPhotos);document.getElementById('closePhotosBtn').addEventListener('click',()=>{renderDashboard();showScreen('dashboard');});
+    document.getElementById('openPhotosBtn').addEventListener('click',openPhotos);document.getElementById('closePhotosBtn').addEventListener('click',()=>{renderDashboard();showScreen('dashboard');});
     document.getElementById('quoteInput').addEventListener('input',e=>{quote=e.target.value;saveStored(QUOTE_KEY,quote);});
 
     const fileInput=document.getElementById('fileInput'),quoteFileInput=document.getElementById('quoteFileInput');let activeSlotKey=null,activeOrient=null;
@@ -572,14 +573,14 @@
     function renderPhotoSlots(){const wrap=document.getElementById('photoSlots');wrap.innerHTML='';PHOTO_SLOTS.forEach(slotDef=>{const rec=photos.find(p=>p.key===slotDef.key),row=document.createElement('div');row.className='photo-slot';const text=document.createElement('div');text.className='photo-slot-text';text.innerHTML='<div class="label">'+slotDef.label+'</div><div class="sub">'+slotDef.sub+'</div>';const group=document.createElement('div');group.className='orient-group';['portrait','landscape'].forEach(orient=>{const wrapBtn=document.createElement('div');wrapBtn.className='orient-btn-wrap';const btn=document.createElement('button');btn.className='orient-btn';const url=rec?rec[orient]:null;if(url){btn.classList.add('filled');btn.style.backgroundImage='url('+url+')';btn.textContent=orient==='portrait'?'Portrait':'Landscape';}else btn.textContent=orient==='portrait'?'+ Portrait':'+ Landscape';btn.addEventListener('click',()=>{activeSlotKey=slotDef.key;activeOrient=orient;fileInput.click();});wrapBtn.appendChild(btn);if(url){const rm=document.createElement('button');rm.className='orient-remove';rm.textContent='×';rm.addEventListener('click',e=>{e.stopPropagation();rec[orient]=null;setJSON(PHOTOS_KEY,photos);renderPhotoSlots();});wrapBtn.appendChild(rm);}group.appendChild(wrapBtn);});row.appendChild(text);row.appendChild(group);wrap.appendChild(row);});}
     fileInput.addEventListener('change',e=>{const file=e.target.files[0];if(!file||!activeSlotKey||!activeOrient)return;const reader=new FileReader();reader.onload=ev=>{const img=new Image();img.onload=()=>{const scale=Math.min(1,1400/img.width),canvas=document.createElement('canvas');canvas.width=img.width*scale;canvas.height=img.height*scale;canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);const rec=photos.find(p=>p.key===activeSlotKey);rec[activeOrient]=canvas.toDataURL('image/jpeg',.82);setJSON(PHOTOS_KEY,photos);renderPhotoSlots();renderDashboard();fileInput.value='';};img.src=ev.target.result;};reader.readAsDataURL(file);});
 
-    const timerEl=document.getElementById('timer'),clockEl=document.getElementById('timerClock'),toggleBtn=document.getElementById('timerToggleBtn'),timerButtonLabel=document.getElementById('timerButtonLabel'),waterGlass=document.getElementById('waterGlass'),waterFill=document.getElementById('waterFill'),layerA=document.getElementById('bgLayerA'),layerB=document.getElementById('bgLayerB');let photoRotateTimer=null,photoIdx=0,frontLayer=layerA,backLayer=layerB,resizeDebounce=null;
+    const timerEl=document.getElementById('timer'),clockEl=document.getElementById('timerClock'),toggleBtn=document.getElementById('timerToggleBtn'),timerButtonLabel=document.getElementById('timerButtonLabel'),waterGlass=document.getElementById('waterGlass'),waterFill=document.getElementById('waterFill'),layerA=document.getElementById('bgLayerA'),layerB=document.getElementById('bgLayerB');let photoRotateTimer=null,photoIdx=0,frontLayer=layerA,backLayer=layerB,resizeDebounce=null,photoRequest=0,currentPhotoUrl='';
     const waveFront=document.getElementById('waveFront'),waveBack=document.getElementById('waveBack'),waveEdge=document.getElementById('waveEdge'),secondHand=document.getElementById('secondHand');
     const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
     let liquidFrame=null,lastLiquidFrame=0,lastHandTick=-1;
     function drawLiquid(elapsed){
       const goal=(profile&&profile.dailyGoal?profile.dailyGoal:60)*60000;
       const level=Math.min(.92,.24+elapsed/goal*.68),surface=420*(1-level),phase=elapsed/1000;
-      const amplitude=reduceMotion.matches?0:9;
+      const amplitude=reduceMotion.matches||!activeSession||!activeSession.running?0:9;
       function surfacePath(offset,scale){
         let d='';
         for(let x=0;x<=300;x+=6){
@@ -613,10 +614,58 @@
     function currentOrientation(){return window.matchMedia('(orientation: portrait)').matches?'portrait':'landscape';}
     function imageForRecord(rec){const o=currentOrientation();return o==='portrait'?(rec.portrait||rec.landscape):(rec.landscape||rec.portrait);}
     function activePhotos(){const list=photos.filter(p=>p.portrait||p.landscape);if(quotePhoto)list.push({portrait:quotePhoto,landscape:quotePhoto});return list;}
-    function applyCurrentPhoto(){const list=activePhotos();if(!list.length){timerEl.classList.remove('has-bg');layerA.classList.remove('on');layerB.classList.remove('on');layerA.style.backgroundImage='';layerB.style.backgroundImage='';return;}const url=imageForRecord(list[photoIdx%list.length]);backLayer.style.backgroundImage='url('+url+')';void backLayer.offsetWidth;backLayer.classList.add('on');frontLayer.classList.remove('on');timerEl.classList.add('has-bg');const tmp=frontLayer;frontLayer=backLayer;backLayer=tmp;}
+    function applyCurrentPhoto(){
+      const list=activePhotos(),request=++photoRequest;
+      if(!list.length){
+        currentPhotoUrl='';
+        timerEl.classList.remove('has-bg');
+        [layerA,layerB].forEach(layer=>{layer.classList.remove('on');layer.removeAttribute('src');});
+        document.documentElement.style.removeProperty('--timer-photo');
+        return;
+      }
+      const url=imageForRecord(list[photoIdx%list.length]);
+      if(url===currentPhotoUrl)return;
+      // Decode before crossfading so the previous photo remains visible while loading.
+      const preload=new Image();
+      preload.onload=()=>{
+        if(request!==photoRequest||!screens.timer.classList.contains('active'))return;
+        const entering=backLayer,leaving=frontLayer;
+        entering.onload=()=>{
+          entering.onload=null;
+          if(request!==photoRequest)return;
+          currentPhotoUrl=url;
+          document.documentElement.style.setProperty('--timer-photo','url('+JSON.stringify(url)+')');
+          timerEl.classList.add('has-bg');
+          entering.classList.add('on');
+          leaving.classList.remove('on');
+          frontLayer=entering;backLayer=leaving;
+        };
+        entering.src=url;
+      };
+      preload.onerror=()=>{ /* Keep the current photo if the next image cannot load. */ };
+      preload.src=url;
+    }
     function startPhotoRotation(){stopPhotoRotation();photoIdx=0;applyCurrentPhoto();if(activePhotos().length<=1)return;photoRotateTimer=setInterval(()=>{photoIdx++;applyCurrentPhoto();},60000);}
-    function stopPhotoRotation(){if(photoRotateTimer){clearInterval(photoRotateTimer);photoRotateTimer=null;}}
-    window.addEventListener('resize',()=>{if(!screens.timer.classList.contains('active'))return;clearTimeout(resizeDebounce);resizeDebounce=setTimeout(applyCurrentPhoto,250);});
+    function stopPhotoRotation(){photoRequest++;if(photoRotateTimer){clearInterval(photoRotateTimer);photoRotateTimer=null;}}
+    function syncTimerViewport(){
+      const viewport=window.visualViewport;
+      const height=viewport?viewport.height:window.innerHeight;
+      const top=viewport?viewport.offsetTop:0;
+      timerEl.style.setProperty('--timer-height',Math.ceil(height)+'px');
+      timerEl.style.setProperty('--timer-top',Math.max(0,Math.floor(top))+'px');
+    }
+    function handleViewportChange(){
+      if(!screens.timer.classList.contains('active'))return;
+      syncTimerViewport();
+      clearTimeout(resizeDebounce);
+      resizeDebounce=setTimeout(applyCurrentPhoto,150);
+    }
+    window.addEventListener('resize',handleViewportChange,{passive:true});
+    window.addEventListener('orientationchange',handleViewportChange,{passive:true});
+    if(window.visualViewport){
+      window.visualViewport.addEventListener('resize',handleViewportChange,{passive:true});
+      window.visualViewport.addEventListener('scroll',syncTimerViewport,{passive:true});
+    }
     function syncQuoteChip(){const chip=document.getElementById('timerQuote');if(quote&&quote.trim()){chip.textContent='“'+quote.trim()+'”';chip.classList.add('show');}else{chip.classList.remove('show');chip.textContent='';}}
     function elapsedActiveMs(){if(!activeSession)return 0;return activeSession.accumulatedMs+((activeSession.running&&activeSession.segmentStart)?Date.now()-activeSession.segmentStart:0);}
     function startOrResume(){if(!activeSession)activeSession={startedAt:Date.now(),accumulatedMs:0,running:true,segmentStart:Date.now()};else if(!activeSession.running){activeSession.running=true;activeSession.segmentStart=Date.now();}setJSON(ACTIVE_KEY,activeSession);}
