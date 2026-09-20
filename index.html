@@ -295,12 +295,13 @@
     html:fullscreen #timer { top: 0; height: 100%; }
     html:-webkit-full-screen #timer { top: 0; height: 100%; }
     html::backdrop { background: #171f2d; }
-    .focus-notice { position:absolute; top:max(76px, calc(env(safe-area-inset-top) + 56px)); left:50%; transform:translateX(-50%); z-index:5; width:min(440px, calc(100% - 40px)); padding:14px 44px 14px 16px; border:1px solid #ffffff90; border-radius:16px; background:#ffffffeb; color:#343e50; font-size:12px; line-height:1.5; -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px); }
+    #timer { --focus-top-gap: calc(env(safe-area-inset-top, 0px) + 24px); }
+    .focus-notice { position:absolute; top:calc(var(--focus-top-gap) + 56px); left:50%; transform:translateX(-50%); z-index:5; width:min(440px, calc(100% - 40px)); padding:14px 44px 14px 16px; border:1px solid #ffffff90; border-radius:16px; background:#ffffffeb; color:#343e50; font-size:12px; line-height:1.5; -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px); }
     .focus-notice button { position:absolute; right:0; top:0; width:40px; height:44px; padding:0; border:0; background:transparent; color:inherit; font-size:20px; }
     #timer .bg-overlay { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at 50% 44%, #fff 0%, #f6f7f9 70%); }
     #timer.has-bg .bg-overlay { background: linear-gradient(180deg, rgba(9,16,30,.24), rgba(9,16,30,.55)); }
-    .timer-topline { position: absolute; top: max(24px, env(safe-area-inset-top)); left: max(24px, env(safe-area-inset-left)); z-index: 3; }
-    .back-btn { min-height: 44px; padding: 10px 16px; border: 1px solid rgba(255,255,255,.7); border-radius: 999px; background: rgba(255,255,255,.75); color: #505762; font-size: 13px; font-weight: 500; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+    .timer-topline { position: absolute; top: var(--focus-top-gap); left: max(24px, env(safe-area-inset-left)); z-index: 3; }
+    .back-btn { min-height: 44px; padding: 10px 18px; font-size: 13px; font-weight: 550; }
     .quote-chip { position: absolute; bottom: max(24px, env(safe-area-inset-bottom)); left: 50%; z-index: 3; display: none; width: max-content; max-width: min(560px, 85vw); max-height: 80px; overflow: auto; padding: 10px 18px; transform: translateX(-50%); border-radius: 16px; background: rgba(255,255,255,.75); color: #424952; font-size: 13px; line-height: 1.5; text-align: center; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); overflow-wrap: anywhere; }
     .quote-chip.show { display: block; }
     .timer-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 34px; padding: 92px 24px 120px; text-align: center; }
@@ -316,11 +317,22 @@
     .water-time { position: absolute; top: 38%; left: 0; right: 0; z-index: 4; color: #26334b; font-size: clamp(42px, 6vw, 56px); font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: -.045em; text-shadow: 0 1px 15px #ffffff70; }
     #timer.has-bg .water-time { color: #fff; text-shadow: 0 2px 15px #152a5360; }
     .timer-controls { display: grid; justify-items: center; gap: 12px; }
-    .timer-btn { min-width: 158px; min-height: 54px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 14px 25px; border: 1px solid #ffffffb0; border-radius: 999px; background: #ffffffbb; color: #293348; font-size: 15px; font-weight: 550; box-shadow: 0 4px 16px #52678812, inset 0 1px 1px white; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
-    .timer-btn:hover { background: #fff; box-shadow: 0 5px 20px #52678820; }
-    .timer-btn.running { color: #274cce; background: #eef3ffdf; border-color: #fff; }
-    .timer-state { color: #666f7d; font-size: 11px; letter-spacing: .025em; min-height: 15px; }
-    #timer.has-bg .timer-state { color: white; text-shadow: 0 1px 8px #000; }
+    .timer-btn { min-width: 158px; min-height: 54px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 14px 25px; font-size: 15px; font-weight: 550; }
+    .back-btn, .timer-btn {
+      position:relative; isolation:isolate; border:1px solid #ffffffd9; border-radius:999px;
+      background:linear-gradient(155deg, #ffffffb8 0%, #ffffff70 48%, #dae9ff8c 100%);
+      color:#243249; text-shadow:0 1px 2px #ffffff60;
+      box-shadow:inset 0 2px 2px #ffffffed, inset 0 -2px 3px #a4bbd650, 0 5px 20px #12203a1c;
+      -webkit-backdrop-filter:blur(22px) saturate(165%); backdrop-filter:blur(22px) saturate(165%);
+      transition:box-shadow .18s ease, transform .12s ease;
+    }
+    .back-btn::before, .timer-btn::before {
+      content:""; position:absolute; inset:4px; z-index:-1; pointer-events:none;
+      border:1px solid #ffffff75; border-bottom-color:#ffffff30; border-radius:inherit;
+      background:linear-gradient(180deg, #ffffff38, #ffffff00 48%);
+    }
+    .back-btn:hover, .timer-btn:hover { box-shadow:inset 0 2px 3px #fff, inset 0 -2px 3px #a4bbd650, 0 6px 22px #12203a26; }
+    .timer-btn.running { color:#2149b3; background:linear-gradient(155deg, #ffffffb8, #cfe2ff94 52%, #b7d3ff94); }
     .button-clock { position: relative; width: 31.5px; height: 31.5px; flex: 0 0 auto; border: 1.95px solid currentColor; border-radius: 50%; }
     .clock-hand, .clock-hour { position: absolute; bottom: 50%; left: 50%; width: 2.25px; height: 10.5px; border-radius: 99px; background: currentColor; transform: translateX(-50%); transform-origin: 50% 100%; }
     .clock-hour { height: 7.5px; transform: translateX(-50%) rotate(120deg); opacity: .45; }
@@ -343,7 +355,7 @@
       .photo-slot { align-items: flex-start; flex-direction: column; }
       .orient-group { width: 100%; }
       .orient-btn { width: 100px; }
-      .timer-topline { top: 17px; left: 17px; right: 17px; }
+      .timer-topline { top: var(--focus-top-gap); left: max(17px, env(safe-area-inset-left)); right: 17px; }
       .timer-label { display: none; }
     }
     .storage-notice { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:100; width:min(92vw,520px); padding:14px 18px; border:1px solid #e7ceb8; border-radius:16px; background:#fff7ed; color:#724221; font-size:13px; line-height:1.45; }
@@ -504,7 +516,6 @@
       </div>
       <div class="timer-controls">
         <button class="timer-btn" id="timerToggleBtn" aria-label="Start timer" aria-pressed="false"><span class="button-clock" aria-hidden="true"><span class="clock-hour"></span><span class="clock-hand" id="secondHand"></span></span><span id="timerButtonLabel">Start</span></button>
-        <span class="timer-state" id="timerState" role="status" aria-live="polite">Ready</span>
       </div>
     </div>
   </div>
@@ -605,7 +616,7 @@
     function fullscreenFallback(){
       const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
       showFocusNotice('fullscreen',ios?
-        'For a view without Safari controls, use Share → Add to Home Screen, then open Focus from your Home Screen.':
+        'Best experience: tap Share on this site → Add to Home Screen → save as Focus. Then open Focus from your Home Screen.':
         'Full screen is unavailable in this browser or preview. The timer will still work here.');
     }
     async function closeNativeFullscreen(){
@@ -794,8 +805,6 @@
       toggleBtn.classList.toggle('running',running);
       waterGlass.classList.toggle('running',running);
       clockEl.textContent=fmt(elapsed);
-      const state=document.getElementById('timerState'),status=running?'Running':elapsed>0?'Paused':'Ready';
-      if(state.textContent!==status)state.textContent=status;
       drawLiquid(elapsed);
       if(running&&screens.timer.classList.contains('active')&&!document.hidden)startLiquidMotion();else stopLiquidMotion();
     }
