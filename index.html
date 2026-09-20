@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f5f7ef">
   <title>Focus — Study Timer</title>
   <style>
@@ -280,16 +280,19 @@
     input[type=file] { display: none; }
 
     /* Liquid glass: motion is driven by elapsed time, never by a free-running animation. */
-    #timer { position: relative; align-items: center; justify-content: center; min-height: 100svh; background: #f7f8fa; isolation: isolate; }
-    #timer .bg-layer { position: absolute; inset: 0; z-index: -3; background-position: center; background-size: cover; opacity: 0; transition: opacity 1s ease; }
+    body.timer-open { overflow: hidden; overscroll-behavior: none; }
+    /* Fill the live viewport, including space freed when Safari's toolbar collapses. */
+    #timer { position: fixed; inset: 0; z-index: 10; width: 100%; height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; align-items: center; justify-content: center; background: #f7f8fa; isolation: isolate; }
+    /* Always crop to fill; portrait/landscape labels never constrain image sizing. */
+    #timer .bg-layer { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; background-position: center center; background-size: cover; background-repeat: no-repeat; opacity: 0; transition: opacity 1s ease; pointer-events: none; }
     #timer .bg-layer.on { opacity: 1; }
-    #timer .bg-overlay { position: absolute; inset: 0; z-index: -2; background: radial-gradient(ellipse at 50% 44%, #fff 0%, #f6f7f9 70%); }
+    #timer .bg-overlay { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at 50% 44%, #fff 0%, #f6f7f9 70%); }
     #timer.has-bg .bg-overlay { background: linear-gradient(180deg, rgba(9,16,30,.24), rgba(9,16,30,.55)); }
     .timer-topline { position: absolute; top: max(24px, env(safe-area-inset-top)); left: max(24px, env(safe-area-inset-left)); z-index: 3; }
     .back-btn { min-height: 44px; padding: 10px 16px; border: 1px solid rgba(255,255,255,.7); border-radius: 999px; background: rgba(255,255,255,.75); color: #505762; font-size: 13px; font-weight: 500; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
     .quote-chip { position: absolute; bottom: max(24px, env(safe-area-inset-bottom)); left: 50%; z-index: 3; display: none; width: max-content; max-width: min(560px, 85vw); max-height: 80px; overflow: auto; padding: 10px 18px; transform: translateX(-50%); border-radius: 16px; background: rgba(255,255,255,.75); color: #424952; font-size: 13px; line-height: 1.5; text-align: center; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); overflow-wrap: anywhere; }
     .quote-chip.show { display: block; }
-    .timer-content { position: relative; display: flex; flex-direction: column; align-items: center; gap: 34px; padding: 92px 24px 120px; text-align: center; }
+    .timer-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 34px; padding: 92px 24px 120px; text-align: center; }
     .glass-stage { position: relative; }
     .glass-shadow { position: absolute; left: 8%; right: 8%; bottom: -20px; height: 28px; border-radius: 50%; background: #647896; opacity: .12; filter: blur(14px); }
     .water-glass { position: relative; width: clamp(205px, 29vh, 285px); max-width: 65vw; aspect-ratio: .72; overflow: hidden; border: 1px solid rgba(255,255,255,.97); border-radius: 32px 32px 56px 56px; background: linear-gradient(102deg, rgba(255,255,255,.9), rgba(235,242,250,.16) 15%, rgba(255,255,255,.32) 78%, rgba(224,233,244,.54)); box-shadow: 0 1px 3px #53667c19, 16px 26px 48px #60728c15, inset 2px 0 3px #ffffff, inset -3px -3px 7px #8499b42b; -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
@@ -371,6 +374,14 @@
       .water-time { font-size:40px; }
       .hero-art { display:none; }
       .landing-shell { min-height:calc(100svh - 48px); }
+    }
+    @media (max-height:500px) {
+      #timer .timer-content { padding: 52px 24px 24px; gap: 12px; }
+      #timer .water-glass { width: clamp(90px, 30vh, 150px); width: clamp(90px, 30dvh, 150px); }
+      #timer .water-time { font-size: 28px; }
+      #timer .timer-controls { gap: 6px; }
+      #timer .timer-btn { min-height: 44px; padding: 10px 20px; }
+      #timer .quote-chip { bottom: 12px; left: auto; right: 12px; transform: none; max-width: 22vw; max-height: 68px; font-size: 11px; }
     }
     @media (prefers-reduced-motion:reduce) {
       *, *::before, *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
@@ -530,7 +541,7 @@
     if(!photos){photos=PHOTO_SLOTS.map(s=>({key:s.key,portrait:null,landscape:null}));setJSON(PHOTOS_KEY,photos);}
     else{photos=photos.map(p=>p.portrait===undefined?{key:p.key,portrait:null,landscape:p.dataUrl||null}:p);PHOTO_SLOTS.forEach(s=>{if(!photos.find(p=>p.key===s.key))photos.push({key:s.key,portrait:null,landscape:null});});setJSON(PHOTOS_KEY,photos);}
     const screens={landing:document.getElementById('landing'),onboarding:document.getElementById('onboarding'),dashboard:document.getElementById('dashboard'),photos:document.getElementById('photos'),timer:document.getElementById('timer')};
-    function showScreen(name){Object.values(screens).forEach(s=>s.classList.remove('active'));screens[name].classList.add('active');if(name!=='timer'){stopPhotoRotation();stopLiquidMotion();}window.scrollTo(0,0);}
+    function showScreen(name){Object.values(screens).forEach(s=>s.classList.remove('active'));screens[name].classList.add('active');document.body.classList.toggle('timer-open',name==='timer');if(name!=='timer'){stopPhotoRotation();stopLiquidMotion();}window.scrollTo(0,0);}
 
     let problemAnswers={},currentStep=1;
     function setStep(step){currentStep=step;[1,2,3].forEach(n=>{document.getElementById('step'+n).classList.toggle('active',n===step);const p=document.getElementById('prog'+n);p.classList.toggle('done',n<step);p.classList.toggle('current',n===step);});document.getElementById('obStepCount').textContent=String(step).padStart(2,'0')+' / 03';}
